@@ -1,0 +1,36 @@
+# never commit big data
+data/
+reference/
+ref/
+
+# raw sequencing and alignments
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+*.bam
+*.sam
+*.cram
+*.bai
+*.csi
+
+# indexes / db files
+*.amb
+*.ann
+*.bwt
+*.pac
+*.sa
+*.mmi
+*.idx
+*.dmnd
+
+# outputs
+results/
+output/
+logs/
+tmp/
+
+# misc
+*.log
+.DS_Store
+.env
