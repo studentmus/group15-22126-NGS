@@ -46,12 +46,6 @@ trim() {
         log "Trimmed file already exists ($trimmed_fastq), skipping $input_fastq"
     else
         log "Trimming $input_fastq, output: $trimmed_fastq"
-        # fastp \
-        # --in1 "$input_fastq" \
-        # --out1 "$trimmed_fastq" \
-        # --adapter_sequence CTGTCTCTTATACACATCT \
-        # --qualified_quality_phred 30 \
-        # --length_required 60
         temp_output=$(mktemp)
 
         $trimmomatic SE \
