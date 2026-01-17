@@ -21,10 +21,16 @@
 
 ### Preprocessing
 
-To preprocess single sample, run:
+To preprocess single sample in a HPC job, run:
 
 ```bash
 sbatch /home/projects/22126_NGS/projects/group15/scripts/hpc/run_preprocess.sh /home/projects/22126_NGS/projects/group15/data/raw/mysample.fastq.gz
+```
+
+To submit all samples from `data/samples.csv` to HPC, run:
+
+```bash
+/home/projects/22126_NGS/projects/group15/scripts/hpc/submit-all-preprocess.sh
 ```
 
 If a target output file exits, the corresponding preprocessing step (QC, trimming, decontamination) will be skipped. **Note**: it's a very crude check for presence of expected output file by name, it does not evaluate whether the input file content has changed or similar.
