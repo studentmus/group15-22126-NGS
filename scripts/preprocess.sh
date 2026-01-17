@@ -5,6 +5,7 @@
 # 2. Trim adapters, quality-trim and filter
 # 3. Post-trim QC
 # 4. Decontaminate: Align to human genome and remove unmapped reads
+# 5. Post-decontamination QC
 
 set -e
 set -u
@@ -13,6 +14,7 @@ set -o pipefail
 PROJECT_HOME_DIR=${PROJECT_HOME_DIR:-/home/projects/22126_NGS/projects/group15}
 PROJECT_DATA_DIR=$PROJECT_HOME_DIR/data
 PROEJCT_SCRIPTS_DIR=$PROJECT_HOME_DIR/scripts
+PROEJCT_DATA_FASTQC_DIR=$PROJECT_DATA_DIR/fastqc
 TRIMMED_DIR=$PROJECT_DATA_DIR/trimmed
 DECONTAMINATED_DIR=$PROJECT_DATA_DIR/decontaminated
 LOG_DIR=$PROJECT_HOME_DIR/logs
@@ -33,7 +35,20 @@ log() {
 }
 
 qc() {
-    $PROEJCT_SCRIPTS_DIR/qc-samples.sh "$1"
+    local fastqc=/home/ctools/FastQC/fastqc
+    local fastq_file=$1
+    local file_name="$(basename "$fastq_file")"
+    local qc_report="$PROEJCT_DATA_FASTQC_DIR"/"$(echo "$file_name" | cut -d '.' -f1)_fastqc.html"
+
+    if [ -f "$qc_report" ]; then
+        log "QC report already exists ($qc_report), skipping $fastq_file"
+    else
+        log "Running FastQC on $fastq_file"
+        temp_output=$(mktemp)
+        $fastqc -o "$PROEJCT_DATA_FASTQC_DIR" "$fastq_file" 2>&1 | tee "$temp_output"
+        log $(cat $temp_output)
+        log "Done running FastQC on $fastq_file"
+    fi
 }
 
 trim() {
@@ -111,5 +126,6 @@ for fastq_file in $input; do
     trim "$fastq_file" "$trimmed_fastq"
     qc "$trimmed_fastq"
     remove_human_contaminants "$trimmed_fastq" "$decontaminated_fastq"
+    qc "$decontaminated_fastq"
     log "==== Done pre-processing $fastq_file ===="
 done
