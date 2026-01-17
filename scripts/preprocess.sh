@@ -13,8 +13,7 @@ set -o pipefail
 
 PROJECT_HOME_DIR=${PROJECT_HOME_DIR:-/home/projects/22126_NGS/projects/group15}
 PROJECT_DATA_DIR=$PROJECT_HOME_DIR/data
-PROEJCT_SCRIPTS_DIR=$PROJECT_HOME_DIR/scripts
-PROEJCT_DATA_FASTQC_DIR=$PROJECT_DATA_DIR/fastqc
+PROJECT_DATA_FASTQC_DIR=$PROJECT_DATA_DIR/fastqc
 TRIMMED_DIR=$PROJECT_DATA_DIR/trimmed
 DECONTAMINATED_DIR=$PROJECT_DATA_DIR/decontaminated
 LOG_DIR=$PROJECT_HOME_DIR/logs
@@ -38,14 +37,14 @@ qc() {
     local fastqc=/home/ctools/FastQC/fastqc
     local fastq_file=$1
     local file_name="$(basename "$fastq_file")"
-    local qc_report="$PROEJCT_DATA_FASTQC_DIR"/"$(echo "$file_name" | cut -d '.' -f1)_fastqc.html"
+    local qc_report="$PROJECT_DATA_FASTQC_DIR"/"$(echo "$file_name" | cut -d '.' -f1)_fastqc.html"
 
     if [ -f "$qc_report" ]; then
         log "QC report already exists ($qc_report), skipping $fastq_file"
     else
         log "Running FastQC on $fastq_file"
         temp_output=$(mktemp)
-        $fastqc -o "$PROEJCT_DATA_FASTQC_DIR" "$fastq_file" 2>&1 | tee "$temp_output"
+        $fastqc -o "$PROJECT_DATA_FASTQC_DIR" "$fastq_file" 2>&1 | tee "$temp_output"
         log $(cat $temp_output)
         log "Done running FastQC on $fastq_file"
     fi
