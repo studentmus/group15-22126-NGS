@@ -22,9 +22,6 @@ library(tidyverse)
 Load sample metadata and mOTUs4 merge output (counts).
 
 ```{r}
-scripts_dir <- "/home/miglec/Projects/group15-22126-NGS/scripts"
-setwd(scripts_dir)
-
 samples <- read.csv("../data/samples.csv", header = FALSE)
 samples <- data.frame(
   sample_id = samples$V1,
