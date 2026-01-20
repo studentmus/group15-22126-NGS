@@ -1,0 +1,176 @@
+---
+title: "Rarefaction curves for gut microbiome samples"
+author: "Migle Cerniauskaite"
+date: "latest update: `r Sys.Date()`"
+output:
+  html_document:
+    theme: readable
+editor_options: 
+  chunk_output_type: console
+---
+
+# Rarefaction curves for gut microbiome samples
+
+## Setup
+
+```{r}
+library(vegan)
+library(ggplot2)
+library(tidyverse)
+```
+
+Load sample metadata and mOTUs4 merge output (counts).
+
+```{r}
+scripts_dir <- "/home/miglec/Projects/group15-22126-NGS/scripts"
+setwd(scripts_dir)
+
+samples <- read.csv("../data/samples.csv", header = FALSE)
+samples <- data.frame(
+  sample_id = samples$V1,
+  diet = factor(samples$V2, levels = c("vegan", "omnivore"))
+)
+summary(samples)
+glimpse(samples)
+```
+
+```{r}
+motus_merged <- "../data/motus_out/motus_merged.tsv"
+motus_data <- read.table(
+  motus_merged,
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  # comment.char = "#",
+  check.names = FALSE
+)
+
+names(motus_data)
+dim(motus_data)
+
+# Remove taxonomy info
+motus_data <- motus_data[, -1]
+dim(motus_data)
+
+# Fix sample names
+parse_name <- function(s) {
+  sub(".*(SRR[0-9]+).*", "\\1", s)
+}
+motus_data <- rename_with(motus_data, parse_name)
+glimpse(motus_data)
+```
+
+```{r}
+# Transpose: `vegan` needs samples as rows, species as columns
+abundance_matrix <- t(motus_data)
+cat(
+  "Abundance matrix dimensions:\n",
+  "Samples:", nrow(abundance_matrix), "\n",
+  "Species:", ncol(abundance_matrix), "\n\n"
+)
+```
+
+## Calculate the rarefaction curves
+
+```{r}
+# rarecurve() calculates curves for each sample
+# step = sampling interval (smaller = more points but slower)
+# sample = max depth to rarefy to (default = max depth in dataset)
+
+rarecurve_data <- rarecurve(
+  abundance_matrix,
+  step = 100,
+  label = FALSE,
+  # Output a dataframe
+  tidy = TRUE
+)
+glimpse(rarecurve_data)
+
+# Rename columns for clarity
+rarecurve_data <- rename(
+  rarecurve_data, sample_id = Site, depth = Sample, species = Species
+)
+
+# Add diet group
+rarecurve_data$diet <-
+  samples$diet[match(rarecurve_data$sample_id, samples$sample_id)]
+glimpse(rarecurve_data)
+```
+
+## Plot the rarefaction curves
+
+```{r}
+library(ggrepel)
+
+rarecurve_data |>
+  ggplot(aes(x = depth, y = species, group = sample_id, color = diet)) +
+  geom_line(alpha = 0.7, size = 0.8) +
+  geom_text_repel(
+    data = rarecurve_data |>
+      group_by(sample_id) |>
+      slice_max(depth, n = 1),
+    aes(label = sample_id),
+    hjust = 0,
+    direction = "y",
+    nudge_x = 100,
+    size = 3,
+    segment.color = "grey50"
+  ) +
+  labs(
+    title = "Rarefaction Curves - Species Richness vs Sequencing Depth",
+    x = "Sequencing Depth (Number of Reads)",
+    y = "Number of Species (mOTUs)",
+    color = "Diet Group"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    legend.position = "right",
+    panel.grid.minor = element_blank()
+  )
+
+fig_path <- "../data/figures/rarefaction_curves_by_diet.png"
+ggsave(fig_path, last_plot(), width = 10, height = 6, dpi = 300)
+cat("Plot saved to:", fig_path, "\n\n")
+```
+
+## Calculate summary statistics and recommend rarefaction depth
+
+```{r}
+# Get final richness at maximum depth for each sample
+final_richness <- rarecurve_data |>
+  group_by(sample_id, diet) |>
+  summarize(
+    max_depth = max(depth),
+    richness = max(species),
+    .groups = "drop"
+  )
+```
+
+```{r}
+# install.packages(c("kableExtra"), dependencies = TRUE)
+library(kableExtra)
+
+# knitr::kable(final_richness, "simple")
+knitr::kable(
+  final_richness,
+  caption = "Summary of species richness per sample",
+  col.names = c(
+    "Sample ID",
+    "Diet group",
+    "Max depth (mOTU counts)",
+    "Observed mOTUs"
+  ),
+  digits = 2,
+  booktabs = TRUE
+) %>%
+  kable_styling(full_width = FALSE)
+
+# Common approach: rarefy to minimum depth across all samples
+min_depth <- min(final_richness$max_depth)
+
+cat(
+  "Rarefaction Depth Recommendation:\n",
+  "- Rarefy to", min_depth, "reads for alpha diversity (minimum depth)\n\n"
+)
+```
