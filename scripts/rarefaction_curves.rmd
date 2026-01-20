@@ -114,8 +114,8 @@ rarecurve_data |>
     segment.color = "grey50"
   ) +
   labs(
-    title = "Rarefaction Curves - Species Richness vs Sequencing Depth",
-    x = "Sequencing Depth (Number of Reads)",
+    title = "Rarefaction curves: species richness vs marker gene hits",
+    x = "mOTU marker gene hits",
     y = "Number of Species (mOTUs)",
     color = "Diet Group"
   ) +
