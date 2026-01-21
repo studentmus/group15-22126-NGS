@@ -153,14 +153,14 @@ ggplot(df_disp, aes(x = Diet, y = Distance, fill = Diet)) +
     legend.position = "none",
     plot.title = element_text(hjust = 0.5)
   )
-save_plot("within_group_variation_aitchinson.png")
+save_plot("within_group_variation_aitchison.png")
 
 
 # ==== PCA to explore diversity between diet groups, species-level ====
 
 pca <- prcomp(otu_table_clr_t, center = TRUE, scale. = FALSE)
 
-# Sanity check: distances in PCA should match Aitchkinson distances
+# Sanity check: distances in PCA should match Aitchison distances
 # - Correlation coef should be close to 1
 d1 <- dist(otu_table_clr_t)
 d2 <- dist(pca$x)
@@ -240,4 +240,4 @@ ggplot(df_disp_fam, aes(x = Diet, y = Distance, fill = Diet)) +
     legend.position = "none",
     plot.title = element_text(hjust = 0.5)
   )
-save_plot("within_group_variation_aitchinson_family.png")
+save_plot("within_group_variation_aitchison_family.png")
